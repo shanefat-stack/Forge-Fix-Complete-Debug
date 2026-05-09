@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import LandingScreen from '@/components/forge/LandingScreen';
 import QuestionScreen from '@/components/forge/QuestionScreen';
 import ManualInputsScreen, { ManualInputs } from '@/components/forge/ManualInputsScreen';
@@ -102,6 +102,13 @@ export default function Home() {
   }, [answers, manualInputs]);
 
   const goToScreen = (s: Screen) => setScreen(s);
+
+  // Guard: if we land on pattern/plan without a plan, reset to landing
+  useEffect(() => {
+    if ((screen === 'pattern' || screen === 'plan') && !plan) {
+      setScreen('landing');
+    }
+  }, [screen, plan]);
 
   if (screen === 'landing') {
     return (
