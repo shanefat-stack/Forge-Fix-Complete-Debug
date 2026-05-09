@@ -54,7 +54,8 @@ Generate an adjusted plan for today. Return ONLY a raw JSON object — no markdo
 
     return NextResponse.json(plan);
   } catch (error) {
-    console.error('[follow-up] error:', error);
-    return NextResponse.json({ error: 'Failed to generate follow-up plan' }, { status: 500 });
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error('[follow-up] error:', msg);
+    return NextResponse.json({ error: 'Failed to generate follow-up plan', detail: msg }, { status: 500 });
   }
 }

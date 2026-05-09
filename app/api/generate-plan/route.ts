@@ -52,7 +52,8 @@ Return ONLY a raw JSON object — no markdown, no code fences, no explanation:
 
     return NextResponse.json(plan);
   } catch (error) {
-    console.error('[generate-plan] error:', error);
-    return NextResponse.json({ error: 'Failed to generate plan' }, { status: 500 });
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error('[generate-plan] error:', msg);
+    return NextResponse.json({ error: 'Failed to generate plan', detail: msg }, { status: 500 });
   }
 }
