@@ -6,24 +6,12 @@ export interface ForgePlan {
   steps: string[];
 }
 
-function getSupabaseUrl(): string {
-  return process.env.NEXT_PUBLIC_SUPABASE_URL!;
-}
-
-function getSupabaseAnonKey(): string {
-  return process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-}
-
-async function postToEdgeFunction(path: string, body: object): Promise<ForgePlan> {
-  const url = `${getSupabaseUrl()}/functions/v1/${path}`;
+async function postToApi(url: string, body: object): Promise<ForgePlan> {
   let res: Response;
   try {
     res = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${getSupabaseAnonKey()}`,
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
   } catch {
@@ -41,6 +29,8 @@ async function postToEdgeFunction(path: string, body: object): Promise<ForgePlan
     throw new Error("Got an unexpected response. Try again in a moment.");
   }
 
+  console.log('[forge] raw response:', JSON.stringify(data, null, 2));
+
   const plan = data as Partial<ForgePlan>;
   if (
     typeof plan.mirror !== 'string' ||
@@ -49,6 +39,7 @@ async function postToEdgeFunction(path: string, body: object): Promise<ForgePlan
     typeof plan.planType !== 'string' ||
     !Array.isArray(plan.steps)
   ) {
+    console.error('[forge] shape mismatch — got:', JSON.stringify(data));
     throw new Error("The response wasn't in the right shape. Try again.");
   }
 
@@ -56,12 +47,12 @@ async function postToEdgeFunction(path: string, body: object): Promise<ForgePlan
 }
 
 export function generatePlan(inputs: object): Promise<ForgePlan> {
-  return postToEdgeFunction('generate-plan', inputs);
+  return postToApi('/api/generate-plan', inputs);
 }
 
 export function submitFollowUp(
   response: 'better' | 'same' | 'worse',
   previousPlan: object
 ): Promise<ForgePlan> {
-  return postToEdgeFunction('follow-up', { response, previousPlan });
+  return postToApi('/api/follow-up', { response, previousPlan });
 }
