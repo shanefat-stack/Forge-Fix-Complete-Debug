@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { ForgePlan } from '@/lib/forge';
 
 interface ActionPlanScreenProps {
@@ -8,7 +9,49 @@ interface ActionPlanScreenProps {
   showDoneOnly?: boolean;
 }
 
+type ReminderState = 'idle' | 'set' | 'denied';
+
 export default function ActionPlanScreen({ plan, onDone, showDoneOnly }: ActionPlanScreenProps) {
+  const [reminderState, setReminderState] = useState<ReminderState>('idle');
+
+  async function handleSetReminder() {
+    if (!('Notification' in window)) {
+      // Browser doesn't support notifications — fall back gracefully
+      alert('Your browser doesn\'t support reminders. Try on Chrome or Safari.');
+      return;
+    }
+
+    let permission = Notification.permission;
+
+    if (permission === 'default') {
+      permission = await Notification.requestPermission();
+    }
+
+    if (permission === 'denied') {
+      setReminderState('denied');
+      return;
+    }
+
+    // Schedule for 8 AM tomorrow
+    const now = new Date();
+    const tomorrow8am = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + 1,
+      8, 0, 0, 0
+    );
+    const msUntilTomorrow = tomorrow8am.getTime() - now.getTime();
+
+    setTimeout(() => {
+      new Notification('Forge Check-In', {
+        body: 'Time to check in with Forge. How did yesterday\'s plan go?',
+        icon: '/icon.png',
+      });
+    }, msUntilTomorrow);
+
+    setReminderState('set');
+  }
+
   return (
     <div className="forge-fade-in flex flex-col min-h-screen px-6 py-8">
       <div className="mb-8">
@@ -37,12 +80,26 @@ export default function ActionPlanScreen({ plan, onDone, showDoneOnly }: ActionP
 
       <div className="flex flex-col gap-3">
         {!showDoneOnly && (
-          <button
-            className="w-full bg-[#2a2a2a] text-[#888] font-medium text-base py-4 rounded-xl cursor-default"
-            disabled
-          >
-            Set a reminder for tomorrow
-          </button>
+          <>
+            {reminderState === 'idle' && (
+              <button
+                onClick={handleSetReminder}
+                className="w-full bg-[#1e1e1e] border border-[#3a3a3a] text-[#c17f3e] font-medium text-base py-4 rounded-xl hover:bg-[#252525] transition-colors"
+              >
+                Set a reminder for tomorrow
+              </button>
+            )}
+            {reminderState === 'set' && (
+              <div className="w-full bg-[#1a2a1a] border border-[#2a4a2a] text-[#6abf6a] font-medium text-base py-4 rounded-xl text-center">
+                Reminder set for 8 AM ✓
+              </div>
+            )}
+            {reminderState === 'denied' && (
+              <div className="w-full bg-[#2a1a1a] border border-[#4a2a2a] text-[#888] text-sm py-4 rounded-xl text-center px-4">
+                Notifications blocked. Enable them in your browser settings to set a reminder.
+              </div>
+            )}
+          </>
         )}
         <button
           onClick={onDone}
