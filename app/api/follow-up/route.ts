@@ -1,12 +1,18 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { NextRequest, NextResponse } from 'next/server';
 
-const client = new Anthropic();
-
 const SYSTEM_PROMPT = `You are Forge, a direct and practical wellness coach. Someone is checking in on how yesterday's plan went. Generate an adjusted plan based on their feedback. Be empathetic but brief. Always return valid JSON.`;
 
 export async function POST(req: NextRequest) {
   try {
+    if (!process.env.ANTHROPIC_API_KEY) {
+      return NextResponse.json(
+        { error: 'ANTHROPIC_API_KEY is not configured. Add it to your Vercel environment variables.' },
+        { status: 500 }
+      );
+    }
+
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
     const body = await req.json();
     const { response, previousPlan } = body;
 
