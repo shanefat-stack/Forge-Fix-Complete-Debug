@@ -1,6 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { NextRequest, NextResponse } from 'next/server';
 
+export const maxDuration = 10; // Vercel Hobby plan max (seconds)
+
 const SYSTEM_PROMPT = `You are Forge, a direct and practical wellness coach. Analyze someone's daily check-in and give them one clear, actionable plan for the day. Be empathetic but brief. Never use filler language. Always return valid JSON.`;
 
 export async function POST(req: NextRequest) {
